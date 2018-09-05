@@ -2,10 +2,6 @@ import Lane from '../models/lane';
 import Note from '../models/note';
 import uuid from 'uuid';
 
-export function getSomething(req, res) {
-  return res.status(200).end();
-}
-
 export function addLane(req, res) {
   if (!req.body.name) {
     res.status(403).end();
@@ -34,19 +30,17 @@ export function getLanes(req, res) {
 }
 
 export function deleteLane(req, res) {
-  Note.deleteMany({ id: req.params.laneId }, (err) => {
-    if (err) {
-      res.status(500).send(err);
-    }
-  });
-
   Lane.findOne({ id: req.params.laneId }).exec((err, lane) => {
-    if (err) {
+    if(err){
       res.status(500).send(err);
     }
 
-    lane.remove(() => {
-      res.status(200).end();
+    const notes = lane.notes;
+    const notesIds = notes.map(note => note.id);
+    Note.remove({id: {$in: notesIds}}).exec(err => {
+      lane.remove(() => {
+        res.status(200).end();
+      });
     });
   });
 }
